@@ -53,5 +53,17 @@ namespace backend.Controllers
 
             return Ok(response);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetPageTasks(
+            [FromQuery] string? searchString,
+            [FromQuery] int? categoryId,
+            [FromQuery] int pageNumber = 1, 
+            [FromQuery] int pageSize = 10)
+        {
+           var response = await taskService.GetPageTasks(searchString, categoryId, pageNumber, pageSize);
+
+            return Ok(response);
+        }
     }
 }

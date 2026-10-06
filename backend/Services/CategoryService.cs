@@ -69,6 +69,24 @@ namespace backend.Services
 
             return response;
         }
+        public async Task<CategoryResponse?> GetCategoryByName(string name)
+        {
+            var response = await db.Categories
+                .Where(u => u.Name == name)
+                .Select(u => new CategoryResponse
+                (
+                    u.Id,
+                    u.Name
+                )).FirstOrDefaultAsync();
+
+            if (response == null)
+            {
+                logger.LogWarning("Problem while getting category {name}", name);
+                return null;
+            }
+
+            return response;
+        }
         public async Task<CategoryResponse?> UpdateCategory(int id, UpdateCategoryRequest request)
         {
             if (request == null)

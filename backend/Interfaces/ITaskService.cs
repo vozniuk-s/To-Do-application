@@ -1,4 +1,5 @@
 ﻿using backend.DTOs;
+using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Interfaces
 {
@@ -9,5 +10,6 @@ namespace backend.Interfaces
         public Task<List<TaskResponse>> GetAllTasks();
         public Task<TaskResponse?> GetTaskById(int id);
         public Task<TaskResponse?> UpdateTask(int id, UpdateTaskRequest request);
+        public Task<List<TaskResponse>> GetPageTasks(string? searchString, int? categoryId, int pageNumber, int pageSize);
     }
 }

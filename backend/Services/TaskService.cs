@@ -3,6 +3,7 @@ using backend.Interfaces;
 using backend.Models;
 using backend.DTOs;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Components.Forms;
 
 namespace backend.Services
 {
@@ -107,6 +108,27 @@ namespace backend.Services
             logger.LogInformation("Task with ID{id} updated", id);
 
             return new TaskResponse(entity.Id, entity.Name, entity.Description, null);
+        }
+
+        public async Task<List<TaskResponse>> GetPageTasks(string? searchString, int? categoryId, int pageNumber, int pageSize)
+        {
+            var query = db.Tasks.AsQueryable();
+            
+            if (categoryId.HasValue)
+                query = query.Where(u => u.CategoryId == categoryId.Value);
+
+            if (!string.IsNullOrEmpty(searchString))
+                query = query.Where(u => u.Name.ToLower().Contains(searchString.ToLower()));
+
+            var response = await query
+                .OrderByDescending(u => u.Id)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(u => new TaskResponse(u.Id, u.Name, u.Description,
+                    u.Category != null ? new CategoryResponse(u.Category.Id, u.Category.Name) : null))
+                .ToListAsync();
+
+            return response;
         }
     }
 }
