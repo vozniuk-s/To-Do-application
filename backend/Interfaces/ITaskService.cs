@@ -8,5 +8,6 @@ namespace backend.Interfaces
         public Task<bool> DeleteTask(int id);
         public Task<List<TaskResponse>> GetAllTasks();
         public Task<TaskResponse?> GetTaskById(int id);
+        public Task<TaskResponse?> UpdateTask(int id, UpdateTaskRequest request);
     }
 }

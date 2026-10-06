@@ -37,6 +37,20 @@ namespace backend.Controllers
         {
             var response = await taskService.GetTaskById(id);
 
+            if (response == null)
+                return NotFound(new { message = $"Task with ID {id} wat not found." });
+
+            return Ok(response);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateTask(int id, [FromBody]UpdateTaskRequest request)
+        {
+            var response = await taskService.UpdateTask(id, request);
+
+            if(response == null)
+                return NotFound(new { message = $"Task with ID {id} wat not found." });
+
             return Ok(response);
         }
     }
