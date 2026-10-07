@@ -2,12 +2,19 @@ using backend.Data;
 using backend.Interfaces;
 using backend.Middlewares;
 using backend.Services;
-using Microsoft.EntityFrameworkCore;
-using NLog.Web;
+using DotNetEnv;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpLogging;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using NLog.Web;
+using System.Text;
 
 var logger = NLog.LogManager.GetCurrentClassLogger();
 logger.Info("Launching");
+
+Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +37,7 @@ builder.Services.AddSwaggerGen();
 // Services
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddHttpLogging(options =>
 {
@@ -38,6 +46,22 @@ builder.Services.AddHttpLogging(options =>
                             HttpLoggingFields.ResponseStatusCode |
                             HttpLoggingFields.Duration;
 });
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["JWT_ISSUER"],
+            ValidAudience = builder.Configuration["JWT_AUDIENCE"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT_KEY"]!))
+        };
+    });
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -49,6 +73,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 

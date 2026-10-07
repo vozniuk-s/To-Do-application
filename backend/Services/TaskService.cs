@@ -9,7 +9,7 @@ namespace backend.Services
 {
     public class TaskService(AppDbContext db, ILogger<TaskService> logger) : ITaskService
     {
-        public async Task<TaskResponse> CreateTask(CreateTaskRequest request)
+        public async Task<TaskResponse> CreateTask(CreateTaskRequest request, int currentUserId)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
@@ -19,77 +19,47 @@ namespace backend.Services
                 Name = request.Name,
                 Description = request.Description,
                 CategoryId = request.CategoryId,
+                UserId = currentUserId,
             };
 
             await db.Tasks.AddAsync(newEntity);
             await db.SaveChangesAsync();
 
-            logger.LogInformation("Created task {Id}", newEntity.Id);
+            logger.LogInformation("Task created {Id}", newEntity.Id);
 
-            return new TaskResponse(newEntity.Id, newEntity.Name, newEntity.Description, null);
+            return new TaskResponse(newEntity.Id, newEntity.Name, newEntity.Description, null, newEntity.UserId);
         }
 
-        public async Task<bool> DeleteTask(int id)
+        public async Task<bool> DeleteTask(int id, int currentUserId, string currentUserRole)
         {
-            var taskEntity = await db.Tasks.FirstOrDefaultAsync(u => u.Id == id);
+            var entity = await GetTaskAndValidateAccess(id, currentUserId, currentUserRole);
 
-            if (taskEntity == null)
-            {
-                logger.LogWarning("Error while deleting task {id}", id);
-                return false;
-            }
-
-            db.Tasks.Remove(taskEntity);
+            db.Tasks.Remove(entity);
             await db.SaveChangesAsync();
 
-            logger.LogInformation("Deleted task {Id}", id);
+            logger.LogInformation("Task deleted {Id}", id);
 
             return true;
         }
 
-        public async Task<List<TaskResponse>> GetAllTasks()
+        public async Task<TaskResponse?> GetTaskById(int id, int currentUserId, string currentUserRole)
         {
-            return await db.Tasks
-                .Select(u => new TaskResponse(
-                    u.Id,
-                    u.Name,
-                    u.Description,
-                    u.Category != null ? new CategoryResponse(u.Category.Id, u.Category.Name) : null
-                )).ToListAsync();
+            var entity = await GetTaskAndValidateAccess(id, currentUserId, currentUserRole);
+
+            return new TaskResponse(
+                entity.Id, 
+                entity.Name, 
+                entity.Description,
+                entity.Category != null ? new CategoryResponse(entity.Category.Id, entity.Category.Name) : null, 
+                entity.UserId);
         }
 
-        public async Task<TaskResponse?> GetTaskById(int id)
-        {
-            var response = await db.Tasks
-                .Where(u => u.Id == id)
-                .Select(u => new TaskResponse(
-                    u.Id,
-                    u.Name,
-                    u.Description,
-                    u.Category != null ? new CategoryResponse(u.Category.Id, u.Category.Name) : null
-                )).FirstOrDefaultAsync();
-
-            if (response == null)
-            {
-                logger.LogWarning("Problem while getting task {id}", id);
-                return null;
-            }
-
-            return response;
-        }
-
-        public async Task<TaskResponse?> UpdateTask(int id, UpdateTaskRequest request)
+        public async Task<TaskResponse?> UpdateTask(int id, UpdateTaskRequest request, int currentUserId, string currentUserRole)
         {
             if(request == null)
                 throw new ArgumentNullException(nameof(request));
 
-            var entity = await db.Tasks.FirstOrDefaultAsync(u => u.Id == id);
-
-            if(entity == null)
-            {
-                logger.LogWarning("Error while updating task {id}", id);
-                return null;
-            }
+            var entity = await GetTaskAndValidateAccess(id, currentUserId, currentUserRole);
 
             if (request.CategoryId.HasValue)
             {
@@ -105,12 +75,12 @@ namespace backend.Services
 
             await db.SaveChangesAsync();
 
-            logger.LogInformation("Task with ID{id} updated", id);
+            logger.LogInformation("Task updated {id}", id);
 
-            return new TaskResponse(entity.Id, entity.Name, entity.Description, null);
+            return new TaskResponse(entity.Id, entity.Name, entity.Description, null, entity.UserId);
         }
 
-        public async Task<List<TaskResponse>> GetPageTasks(string? searchString, int? categoryId, int pageNumber, int pageSize)
+        public async Task<List<TaskResponse>> GetPageTasks(string? searchString, int? categoryId, int pageNumber, int pageSize, int currentUserId, string currentUserRole)
         {
             var query = db.Tasks.AsQueryable();
             
@@ -120,15 +90,34 @@ namespace backend.Services
             if (!string.IsNullOrEmpty(searchString))
                 query = query.Where(u => u.Name.ToLower().Contains(searchString.ToLower()));
 
+            if(currentUserRole != "Admin")
+                query = query.Where(u=> u.UserId == currentUserId);
+
             var response = await query
                 .OrderByDescending(u => u.Id)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .Select(u => new TaskResponse(u.Id, u.Name, u.Description,
-                    u.Category != null ? new CategoryResponse(u.Category.Id, u.Category.Name) : null))
+                    u.Category != null ? new CategoryResponse(u.Category.Id, u.Category.Name) : null, 
+                    u.UserId))
                 .ToListAsync();
 
             return response;
+        }
+
+        private async Task<TaskEntity> GetTaskAndValidateAccess(int taskId, int currentUserId, string currentUserRole)
+        {
+            var entity = await db.Tasks
+                .Include(u => u.Category)
+                .FirstOrDefaultAsync(u => u.Id == taskId);
+
+            if (entity == null)
+                throw new KeyNotFoundException($"Task was not found {taskId}");
+
+            if (currentUserRole != "Admin" && entity.UserId != currentUserId)
+                throw new UnauthorizedAccessException("You do not have right access");
+
+            return entity;
         }
     }
 }

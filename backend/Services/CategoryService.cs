@@ -21,24 +21,19 @@ namespace backend.Services
             await db.Categories.AddAsync(newEntity);
             await db.SaveChangesAsync();
 
-            logger.LogInformation("Created category {Id}", newEntity.Id);
+            logger.LogInformation("Category created {Id}", newEntity.Id);
 
             return new CategoryResponse(newEntity.Id, newEntity.Name);
         }
-        public async Task<bool> DeletCategory(int id)
+        public async Task<bool> DeletCategory(int id, string currentUserRole)
         {
-            var entity = await db.Categories.FirstOrDefaultAsync(u => u.Id == id);
 
-            if(entity == null)
-            {
-                logger.LogWarning("Error while deleting category {id}", id);
-                return false;
-            }
+            var entity = await GetCategoryAndValidateAccess(id, currentUserRole);
 
             db.Categories.Remove(entity);
             await db.SaveChangesAsync();
 
-            logger.LogInformation("Deleted category {Id}", id);
+            logger.LogInformation("Category deleted {Id}", id);
 
             return true;
         }
@@ -63,7 +58,7 @@ namespace backend.Services
 
             if(response == null)
             {
-                logger.LogWarning("Problem while getting catrgory {id}", id);
+                logger.LogWarning("Category with ID {id} was not found", id);
                 return null;
             }
 
@@ -81,31 +76,39 @@ namespace backend.Services
 
             if (response == null)
             {
-                logger.LogWarning("Problem while getting category {name}", name);
+                logger.LogWarning("Category with Name {name} was not found", name);
                 return null;
             }
 
             return response;
         }
-        public async Task<CategoryResponse?> UpdateCategory(int id, UpdateCategoryRequest request)
+        public async Task<CategoryResponse?> UpdateCategory(int id, UpdateCategoryRequest request, string currentUserRole)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
-            var entity = await db.Categories.FirstOrDefaultAsync(u => u.Id == id);
-
-            if (entity == null)
-            {
-                logger.LogWarning("Error while updating category {id}", id);
-                return null;
-            }
+            var entity = await GetCategoryAndValidateAccess(id, currentUserRole);
 
             entity.Name = request.Name;
             await db.SaveChangesAsync();
 
-            logger.LogInformation("Category with ID {id} updated", id);
+            logger.LogInformation("Category Updated {id}", id);
 
             return new CategoryResponse(entity.Id, entity.Name);
+        }
+
+        private async Task<CategoryEntity> GetCategoryAndValidateAccess(int categoryId, string currentUserRole)
+        {
+            var entity = await db.Categories
+                .FirstOrDefaultAsync(u => u.Id == categoryId);
+
+            if (entity == null)
+                throw new KeyNotFoundException($"Category was not found {categoryId}");
+
+            if (currentUserRole != "Admin")
+                throw new UnauthorizedAccessException("You do not have right access");
+
+            return entity;
         }
     }
 }

@@ -1,10 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using backend.DTOs;
+using backend.Extensions;
 using backend.Interfaces;
-using backend.DTOs;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 
 namespace backend.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class CategoryController(ICategoryService categoryService) : ControllerBase
@@ -20,7 +23,9 @@ namespace backend.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategory(int id)
         {
-            var response = await categoryService.DeletCategory(id);
+            string userRole = User.GetUserRole();
+
+            var response = await categoryService.DeletCategory(id, userRole);
 
             return Ok(response);
         }
@@ -38,19 +43,15 @@ namespace backend.Controllers
         {
             var response = await categoryService.GetCategoryById(id);
 
-            if(response == null)
-                return NotFound(new {message = $"Category with ID {id} wat not found."});
-
             return Ok(response);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateCategory(int id, [FromBody] UpdateCategoryRequest request)
         {
-            var response = await categoryService.UpdateCategory(id, request);
+            string userRole = User.GetUserRole();
 
-            if(response == null)
-                return NotFound(new { message = $"Category with ID {id} wat not found." });
+            var response = await categoryService.UpdateCategory(id, request, userRole);
 
             return Ok(response);
         }

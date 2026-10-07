@@ -1,9 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using backend.DTOs;
 using backend.Interfaces;
-using backend.DTOs;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using backend.Extensions;
 
 namespace backend.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class TaskController(ITaskService taskService) : ControllerBase
@@ -11,7 +15,9 @@ namespace backend.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateTask([FromBody]CreateTaskRequest request)
         {
-            var response = await taskService.CreateTask(request);
+            int userId = User.GetUserId();
+
+            var response = await taskService.CreateTask(request, userId);
 
             return Ok(response);
         }
@@ -19,15 +25,10 @@ namespace backend.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTask(int id)
         {
-            var response = await taskService.DeleteTask(id);
+            int userId = User.GetUserId();
+            string userRole = User.GetUserRole();
 
-            return Ok(response);
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetAllTasks()
-        {
-            var response = await taskService.GetAllTasks();
+            var response = await taskService.DeleteTask(id, userId, userRole);
 
             return Ok(response);
         }
@@ -35,10 +36,10 @@ namespace backend.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetTaskById(int id)
         {
-            var response = await taskService.GetTaskById(id);
+            int userId = User.GetUserId();
+            string userRole = User.GetUserRole();
 
-            if (response == null)
-                return NotFound(new { message = $"Task with ID {id} wat not found." });
+            var response = await taskService.GetTaskById(id, userId, userRole);
 
             return Ok(response);
         }
@@ -46,10 +47,10 @@ namespace backend.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateTask(int id, [FromBody]UpdateTaskRequest request)
         {
-            var response = await taskService.UpdateTask(id, request);
+            int userId = User.GetUserId();
+            string userRole = User.GetUserRole();
 
-            if(response == null)
-                return NotFound(new { message = $"Task with ID {id} wat not found." });
+            var response = await taskService.UpdateTask(id, request, userId, userRole);
 
             return Ok(response);
         }
@@ -61,7 +62,10 @@ namespace backend.Controllers
             [FromQuery] int pageNumber = 1, 
             [FromQuery] int pageSize = 10)
         {
-           var response = await taskService.GetPageTasks(searchString, categoryId, pageNumber, pageSize);
+            int userId = User.GetUserId();
+            string userRole = User.GetUserRole();
+
+            var response = await taskService.GetPageTasks(searchString, categoryId, pageNumber, pageSize, userId, userRole);
 
             return Ok(response);
         }

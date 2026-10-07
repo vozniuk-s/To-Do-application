@@ -7,5 +7,6 @@ namespace backend.Data
     {
         public DbSet<TaskEntity> Tasks { get; set; }
         public DbSet<CategoryEntity> Categories { get; set; }
+        public  DbSet<UserEntity> Users { get; set; }
     }
 }

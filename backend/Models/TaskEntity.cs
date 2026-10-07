@@ -14,6 +14,9 @@ namespace backend.Models
         public string? Description { get; set; }
         public int? CategoryId { get; set; }
 
+        [Required]
+        public int UserId { get; set; }
+
         [ForeignKey("CategoryId")]
         public CategoryEntity? Category { get; set; }
     }

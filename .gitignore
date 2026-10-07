@@ -402,6 +402,8 @@ FodyWeavers.xsd
 
 logs/
 Release/
+Migrations/
 *.db
 *.db-shm
 *.db-wal
+.env
