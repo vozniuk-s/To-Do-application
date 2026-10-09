@@ -1,6 +1,4 @@
-﻿using backend.DTOs;
-using backend.Interfaces;
-using Microsoft.AspNetCore.Identity.Data;
+﻿using backend.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers
@@ -22,7 +20,7 @@ namespace backend.Controllers
         {
             var token = await authService.Login(request);
 
-            return Ok(new { token = token });
+            return Ok(new { token });
         }
     }
 }

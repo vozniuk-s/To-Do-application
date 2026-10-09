@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
 using NLog.Web;
 using System.Text;
 
@@ -18,26 +17,9 @@ Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Nlog settings
+// Nlog + htpp
 builder.Logging.ClearProviders();
 builder.Host.UseNLog();
-
-// SQlite
-builder.Services.AddDbContext<AppDbContext>(options =>
-{
-    options.UseSqlite("Data Source=appbase.db");
-});
-
-builder.Services.AddControllers();
-
-// Swagger
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-// Services
-builder.Services.AddScoped<ITaskService, TaskService>();
-builder.Services.AddScoped<ICategoryService, CategoryService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddHttpLogging(options =>
 {
@@ -46,6 +28,34 @@ builder.Services.AddHttpLogging(options =>
                             HttpLoggingFields.ResponseStatusCode |
                             HttpLoggingFields.Duration;
 });
+
+// DB
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+    options.UseSqlite("Data Source=appbase.db");
+});
+
+// API
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// DI
+builder.Services.AddScoped<ITaskService, TaskService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+
+// CORS + AddAuthentication
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngular",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:4200")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+        });
+}); 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -61,11 +71,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT_KEY"]!))
         };
     });
+
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-app.UseMiddleware<ExceptionHandlingMiddleware>();
+// Pipeline
+
+app.UseExceptionHandling();
+
 app.UseHttpLogging();
 
 if (app.Environment.IsDevelopment())
@@ -74,11 +88,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseRouting();
+
+app.UseCors("AllowAngular");
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
 logger.Info("Launched");
-
 app.Run();

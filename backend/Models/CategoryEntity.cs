@@ -11,6 +11,9 @@ namespace backend.Models
         [MaxLength(40)]
         public string Name { get; set; } = string.Empty;
 
+        [Required]
+        public int UserId { get; set; }
+
         public ICollection<TaskEntity> Tasks { get; set; } = new List<TaskEntity>();
     }
 }

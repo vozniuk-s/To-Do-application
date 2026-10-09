@@ -15,7 +15,9 @@ namespace backend.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateCategory([FromBody] CreateCategoryRequest request)
         {
-            var response = await categoryService.CreateCategory(request);
+            int userId = User.GetUserId();
+
+            var response = await categoryService.CreateCategory(request, userId);
 
             return Ok(response);
         }
@@ -23,17 +25,10 @@ namespace backend.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategory(int id)
         {
+            int userId = User.GetUserId();
             string userRole = User.GetUserRole();
 
-            var response = await categoryService.DeletCategory(id, userRole);
-
-            return Ok(response);
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetAllCategories()
-        {
-            var response = await categoryService.GetAllCategories();
+            var response = await categoryService.DeletCategory(id, userId, userRole);
 
             return Ok(response);
         }
@@ -41,7 +36,10 @@ namespace backend.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetCategoryById(int id)
         {
-            var response = await categoryService.GetCategoryById(id);
+            int userId = User.GetUserId();
+            string userRole = User.GetUserRole();
+
+            var response = await categoryService.GetCategoryById(id, userId, userRole);
 
             return Ok(response);
         }
@@ -49,9 +47,21 @@ namespace backend.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateCategory(int id, [FromBody] UpdateCategoryRequest request)
         {
+            int userId = User.GetUserId();
             string userRole = User.GetUserRole();
 
-            var response = await categoryService.UpdateCategory(id, request, userRole);
+            var response = await categoryService.UpdateCategory(id, request, userId, userRole);
+
+            return Ok(response);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetPageCategories()
+        {
+            int userId = User.GetUserId();
+            string userRole = User.GetUserRole();
+
+            var response = await categoryService.GetPageCategories(userId, userRole);
 
             return Ok(response);
         }

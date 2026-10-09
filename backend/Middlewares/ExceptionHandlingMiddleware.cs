@@ -1,14 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
-using System.Net;
-using System.Runtime.CompilerServices;
-using System.Text.Json;
 
 namespace backend.Middlewares
 {
     public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
     {
-        public async Task Invoke(HttpContext context)
+        public async Task InvokeAsync(HttpContext context)
         {
             try
             {
@@ -20,7 +17,6 @@ namespace backend.Middlewares
             }
 
         }
-
         private static async Task HandleExceptionAsync(HttpContext context, Exception ex, ILogger logger)
         {
             var statusCode = ex switch
@@ -48,6 +44,14 @@ namespace backend.Middlewares
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = statusCode;
             await context.Response.WriteAsJsonAsync(new { message = clientMessage });
+        }
+    }
+
+    public static class ExceptionHandlingMiddlewareExtensions
+    {
+        public static IApplicationBuilder UseExceptionHandling(this IApplicationBuilder builder)
+        {
+            return builder.UseMiddleware<ExceptionHandlingMiddleware>();
         }
     }
 }

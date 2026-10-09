@@ -16,7 +16,5 @@ namespace backend.Models
 
         [Required]
         public string Role { get; set; } = "User";
-
-        public ICollection<TaskEntity> Tasks { get; set; } = new List<TaskEntity>();
     }
 }

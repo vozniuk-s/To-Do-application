@@ -11,6 +11,7 @@ namespace backend.Models
         [Required]
         [MaxLength(125)]
         public string Name { get; set; } = string.Empty;
+
         public string? Description { get; set; }
         public int? CategoryId { get; set; }
 

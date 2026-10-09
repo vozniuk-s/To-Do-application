@@ -400,6 +400,11 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 
+# Visual Studio Code
+.vscode/
+!.vscode/extensions.json
+.history/
+
 logs/
 Release/
 Migrations/
