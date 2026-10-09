@@ -1,0 +1,126 @@
+<div class="bg-light">
+    <div class="d-flex vh-100 w-100">
+       <aside class="bg-white border-end d-flex flex-column align-items-center" style="width: 250px;">
+            <img class="logo mt-3" src="/logo.png" style="height: 64px; object-fit: cover;">
+        </aside> 
+
+        <div class="flex-grow-1 d-flex flex-column">
+            <header class="bg-white border-bottom d-flex justify-content-between align-items-center px-4" style="height: 70px;">
+                <input class="form-control rounded-pill w-50" type="text" placeholder="Search..." [(ngModel)]="search" (input)="onSearch()">
+                 <div>
+                    <span class="m-2 fw-bold">{{username}}</span>
+                    <button class="btn btn-sm delete" style="background-color: #fee2e2; color: #ef4444; border: none;" (click)="onLeave()">Leave</button>
+                </div>
+            </header>
+
+            <main class="p-4 flex-grow-1 overflow-auto">
+                <div class="d-flex gap-2 mb-4 pb-3 border-bottom">
+                   <button class="btn rounded-pill border"
+                    [class.text-white]="selectedCategoryId === null"
+                    [class.btn-light]="selectedCategoryId !== null"
+                    [style.background-color]="selectedCategoryId === null ? '#df185b' : ''"
+                    (click)="onCategorySelect(null)">All</button>
+
+                    @for (category of categories; track category.id){
+                         <button class="btn rounded-pill border"
+                            [class.text-white]="selectedCategoryId === category.id"
+                            [class.btn-light]="selectedCategoryId !== category.id"
+                            [style.background-color]="selectedCategoryId === category.id ? '#df185b' : ''"
+                            (click)="onCategorySelect(category.id)">{{category.name}}</button>
+                    }
+                    <button class="btn btn-outline-secondary rounded-pill border" (click)="showCategoryEditor = true">Edit</button>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-8">
+                        <div class="hide-scroll" style="max-height: calc(100vh - 250px); overflow-y: auto; padding-right: 10px;">
+                            <div class="d-flex align-items-center mb-3">
+                                <h2>Tasks</h2>
+                                <button class="btn text-white rounded-pill ms-4" style="background-color: #df185b;" (click)="onCreateTask()">+ New Task</button>
+                            </div>
+        
+                            @for (task of tasks; track task.id){
+                                <div class="card shadow-sm mb-3 border-0 rounded-4" (click)="onTask(task.id)">
+                                    <div class="d-flex flex-column align-items-start p-3">
+                                        <h5 class="mb-2">{{task.name}}</h5>
+                                        <span class="badge rounded-pill bg-warning bg-opacity-10 px-3 text-dark">{{task.category?.name}}</span>
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="d-flex justify-content-center">
+                                <button class="btn btn-link text-decoration-none" style="color: gray; font-size: small;" (click)="loadTasks()">Load more</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (selectedTask !== null) {
+                        <div class="col-4">
+                            <div class="shadow-sm rounded-4 p-4">
+                                <h3 class="mb-4">Task editor</h3>
+
+                                <label class="mb-1">Task name</label>
+                                <input type="text" class="form-control mb-3" placeholder="Task name" [(ngModel)]="selectedTask.name">
+
+                                <label class="mb-1">Category</label>
+                                <select class="form-select mb-3"
+                                    [ngModel]="selectedTask.category?.id"
+                                    (ngModelChange)="onCategoryChange($event)">
+
+                                <option [ngValue]="null">None</option>
+
+                                @for (category of categories; track category.id) {
+                                    <option [ngValue]="category.id">{{category.name}}</option>
+                                }
+                                </select>
+                
+                                <label class="mb-1">Description</label>
+                                <textarea class="form-control mb-4" style="height: 200px; resize: none;" placeholder="Description" [(ngModel)]="selectedTask.description"></textarea>
+
+                                <div class="d-flex gap-2">
+                                    <button class="btn text-white w-50" style="background-color: #df185b;" (click)="onSave()">Save</button>
+                                    <button class="btn btn-outline-secondary w-50" (click)="onCancel()">Cancel</button>
+                                </div>
+                
+                                @if (selectedTask.id !== 0) {
+                                     <button class="btn delete w-100 mt-3" style="background-color: #fee2e2; color: #ef4444; border: none;" (click)="onDelete()">Delete task</button>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    @if (showCategoryEditor) {
+                        <div class="modal d-block" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content rounded-4 border-0 shadow">
+                                    <div class="modal-header border-bottom-0 pb-0">
+                                        <h5 class="modal-title fw-bold">Category editor</h5>
+                                        <button type="button" class="btn-close" (click)="showCategoryEditor = false"></button>
+                                    </div>
+                
+                                    <div class="modal-body p-4">
+                                        <label class="mb-2 text-muted small">Create category</label>
+                                        <div class="d-flex gap-2 mb-4">
+                                            <input type="text" class="form-control" placeholder="Category name" [(ngModel)]="newCategoryName">
+                                            <button class="btn text-white px-4" style="background-color: #df185b;" (click)="addCategory()">Add</button>
+                                        </div>
+                    
+                                        <label class="mb-2 text-muted small">Categories</label>
+                                        <ul class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;">
+                                            @for (category of categories; track category.id) {
+                                                <li class="list-group-item px-0 d-flex gap-2 border-0 py-1">
+                                                    <input type="text" class="form-control" placeholder="Category name" [(ngModel)]="category.name">
+                                                    <button class="btn text-white" style="background-color: #df185b;" (click)="updateCategory(category)">Save</button>
+                                                    <button class="btn delete" style="background-color: #fee2e2; color: #ef4444; border: none;" (click)="deleteCategory(category.id)">Delete</button>
+                                                </li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </main>
+    </div>
+</div>

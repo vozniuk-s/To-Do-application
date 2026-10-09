@@ -1,1 +1,44 @@
-/* You can add global styles to this file, and also import other style files */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+button:focus, 
+input:focus, 
+textarea:focus, 
+select:focus {
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.btn-outline-secondary:hover{
+    background-color: transparent !important;
+    color: #848b91 !important;
+}
+
+.btn-outline-secondary:active{
+    transform: scale(0.99) !important;
+}
+
+.delete:active {
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.5) !important;
+}
+
+.btn:active{
+    transform: scale(0.95) !important;
+}
+
+input:focus {
+    border-color: #df185b !important;
+}
+
+.card:hover {
+    box-shadow: 0 4px 12px rgba(88, 69, 69, 0.205) !important;
+}
+
+.hide-scroll {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+}
+.hide-scroll::-webkit-scrollbar {
+      display: none;
+}
